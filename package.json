@@ -1,0 +1,14 @@
+{
+  "name": "bemjson2bl",
+  "version": "1.0.1",
+  "description": "Grab blocks from bemjson",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bem"
+  ],
+  "author": "vitkarpov <viktor.s.karpov@gmail.com>",
+  "license": "ISC"
+}
