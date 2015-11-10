@@ -3,13 +3,32 @@ var path = require('path');
 var vow = require('vow');
 var _ = require('lodash');
 
-var Converter = function(params) {
+/**
+ * Параметры для конструктора парсера
+ * @typedef {object} Parser~params
+ * @property {string} baseDir — корень проекта: где лежать папки с блоками и bemjson
+ * @property {string} src - входой bemjson
+ * @property {array} levels - уровни переопределения
+ */
+
+/**
+ * Конструктор парсера
+ * @class Parser
+ * @param {Parser~params} params
+ */
+var Parser = function(params) {
     this.baseDir = params.baseDir;
     this.src = params.src;
     this.levels = params.levels;
 };
 
-Converter.prototype.getFileNames = function() {
+/**
+ * Реализует всю логику:
+ * - разбирает bemjson на список блоков
+ * - собираем список папок и цсс-файлов блоков
+ * @return {Promise}
+ */
+Parser.prototype.getFileNames = function() {
     return new vow.Promise(function(resolve, reject) {
         var blocks = [];
 
@@ -17,22 +36,34 @@ Converter.prototype.getFileNames = function() {
             this._getBlockFromCtx(ctx, blocks);
         }, this);
 
-        var blockDirs = this._getBlocksDirFromLevels(_.uniq(blocks))
-        var cssFiles = this._getCssFiles(blockDirs);
+        var blocks = _.uniq(blocks);
+
+        var blockDirs = this._getBlocksDirFromLevels(blocks)
+        var cssFiles = this._getCssFiles(blocks);
 
         resolve({ css: cssFiles, dirs: blockDirs });
 
     }.bind(this));
 };
 
-Converter.prototype._getBemjson = function() {
+/**
+ * Читает bemjson из файлика, приводит к plain-объекту
+ * @return {object|array}
+ */
+Parser.prototype._getBemjson = function() {
     var file = path.join(this.baseDir, this.src);
     var bemjson = fs.readFileSync(file, 'utf8');
 
     return new Function('return ' + bemjson)();
 };
 
-Converter.prototype._getBlockFromCtx = function(ctx, storage) {
+/**
+ * Достает список блоков из bemjson
+ * @param  {object|array} ctx - bemjson
+ * @param  {array} storage - хранилище списка: вызывая рекурсивно этот метод, передаем хранилище по ссылке
+ * @return {array}
+ */
+Parser.prototype._getBlockFromCtx = function(ctx, storage) {
     if (ctx === undefined || typeof ctx === 'string') {
         return;
     }
@@ -47,7 +78,12 @@ Converter.prototype._getBlockFromCtx = function(ctx, storage) {
     }
 };
 
-Converter.prototype._getBlocksDirFromLevels = function(blocks) {
+/**
+ * Возвращает список папок блоков со всех уровней переопределения
+ * @param  {array} blocks список блоков
+ * @return {array}
+ */
+Parser.prototype._getBlocksDirFromLevels = function(blocks) {
     var dirs = [];
 
     blocks.forEach(function(block) {
@@ -64,10 +100,14 @@ Converter.prototype._getBlocksDirFromLevels = function(blocks) {
     return dirs;
 };
 
-Converter.prototype._getCssFiles = function(dirs) {
+/**
+ * Возвращает список цсс-файлов блоков со всех уровней переопределения
+ * @return {array}
+ */
+Parser.prototype._getCssFiles = function(blocks) {
     var cssFiles = [];
 
-    dirs.forEach(function(dir) {
+    this._getBlocksDirFromLevels(blocks).forEach(function(dir) {
         var file = path.join(dir, dir.split('/').pop() + '.css');
         try {
             fs.statSync(file);
@@ -80,12 +120,12 @@ Converter.prototype._getCssFiles = function(dirs) {
 
 module.exports = {
     getFileNames: function(params) {
-        var converter = new Converter({
+        var parser = new Parser({
             baseDir: process.cwd(),
             src: params.bemjsonSrc,
             levels: params.levels
         });
 
-        return converter.getFileNames();
+        return parser.getFileNames();
     }
 }
