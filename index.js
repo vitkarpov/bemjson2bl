@@ -48,13 +48,18 @@ Parser.prototype.getFileNames = function() {
 
 /**
  * Читает bemjson из файлика, приводит к plain-объекту
- * @return {object|array}
+ * @return {array}
  */
 Parser.prototype._getBemjson = function() {
     var file = path.join(this.baseDir, this.src);
-    var bemjson = fs.readFileSync(file, 'utf8');
+    var raw = fs.readFileSync(file, 'utf8');
 
-    return new Function('return ' + bemjson)();
+    var bemjson = new Function('return ' + raw)();
+
+    // bemjson может быть массивом или объектом: приведем к единому виду
+    if (!Array.isArray(bemjson)) {
+        return [bemjson];
+    }
 };
 
 /**
