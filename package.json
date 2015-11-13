@@ -10,5 +10,9 @@
     "bem"
   ],
   "author": "vitkarpov <viktor.s.karpov@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^3.10.1",
+    "vow": "^0.4.11"
+  }
 }
