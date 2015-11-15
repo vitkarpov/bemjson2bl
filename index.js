@@ -60,6 +60,7 @@ Parser.prototype._getBemjson = function() {
     if (!Array.isArray(bemjson)) {
         return [bemjson];
     }
+    return bemjson;
 };
 
 /**
